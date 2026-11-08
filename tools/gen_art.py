@@ -79,7 +79,8 @@ GUARD = dict(
 def character(pal, facing, frame):
     """16x16 chibi: facing in down/up/left; frame 0 stand, 1/2 walk."""
     c = Canvas(16, 16)
-    body, light, accent, face, eye = pal["body"], pal["light"], pal.get("accent", light), pal["face"], pal["eye"]
+    body, light, face, eye = pal["body"], pal["light"], pal["face"], pal["eye"]
+    accent = pal.get("accent", light)
     bob = 1 if frame in (1, 2) else 0
 
     # Pointed hood ears; add a bright accent strip to make the silhouette read as Mona.
