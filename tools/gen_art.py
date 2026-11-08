@@ -58,30 +58,49 @@ def rgb(r, g, b):
 
 
 MONA = dict(
-    body=rgb(118, 73, 214), light=rgb(166, 124, 240), face=rgb(247, 222, 186),
-    eye=rgb(27, 18, 48), cheek=rgb(240, 150, 160), cap=None)
+    body=rgb(122, 82, 232),
+    light=rgb(158, 122, 255),
+    accent=rgb(101, 241, 214),
+    face=rgb(255, 235, 206),
+    eye=rgb(24, 18, 46),
+    cheek=rgb(255, 128, 124),
+    cap=None,
+)
 GUARD = dict(
-    body=rgb(70, 110, 80), light=rgb(110, 150, 115), face=rgb(236, 190, 150),
-    eye=rgb(27, 18, 48), cheek=rgb(220, 140, 120), cap=rgb(52, 84, 62))
+    body=rgb(70, 110, 80),
+    light=rgb(110, 150, 115),
+    face=rgb(236, 190, 150),
+    eye=rgb(27, 18, 48),
+    cheek=rgb(220, 140, 120),
+    cap=rgb(52, 84, 62),
+)
 
 
 def character(pal, facing, frame):
     """16x16 chibi: facing in down/up/left; frame 0 stand, 1/2 walk."""
     c = Canvas(16, 16)
-    body, light, face, eye = pal["body"], pal["light"], pal["face"], pal["eye"]
+    body, light, accent, face, eye = pal["body"], pal["light"], pal.get("accent", light), pal["face"], pal["eye"]
     bob = 1 if frame in (1, 2) else 0
-    # ears (hood)
+
+    # Pointed hood ears; add a bright accent strip to make the silhouette read as Mona.
     c.rect(2, 1 + bob, 4, 3 + bob, body)
     c.rect(11, 1 + bob, 13, 3 + bob, body)
-    c.put(3, 2 + bob, light)
-    c.put(12, 2 + bob, light)
-    # head
+    c.put(3, 1 + bob, accent)
+    c.put(12, 1 + bob, accent)
+    c.put(2, 2 + bob, accent)
+    c.put(13, 2 + bob, accent)
+
+    # head / hood
     c.rect(2, 3 + bob, 13, 10 + bob, body)
-    c.rect(3, 2 + bob, 12, 2 + bob, body)
+    c.rect(3, 2 + bob, 12, 2 + bob, accent)
     c.rect(3, 3 + bob, 6, 3 + bob, light)
+    c.rect(9, 3 + bob, 12, 3 + bob, light)
+
     # body / tentacle skirt
     c.rect(4, 11 + bob, 11, 12 + bob, body)
     c.rect(5, 11 + bob, 7, 11 + bob, light)
+    c.rect(8, 11 + bob, 10, 11 + bob, light)
+
     # legs / tentacles
     if frame == 0:
         c.rect(4, 13, 6, 15, body)
@@ -92,20 +111,28 @@ def character(pal, facing, frame):
     else:
         c.rect(4, 13 + bob, 6, 15, body)
         c.rect(9, 13 + bob, 11, 14, body)
+
     if facing == "down":
         c.rect(4, 5 + bob, 11, 9 + bob, face)
         c.rect(5, 6 + bob, 5, 7 + bob, eye)
         c.rect(10, 6 + bob, 10, 7 + bob, eye)
         c.put(4, 8 + bob, pal["cheek"])
         c.put(11, 8 + bob, pal["cheek"])
+        c.put(7, 7 + bob, accent)
+        c.put(8, 7 + bob, accent)
     elif facing == "left":
         c.rect(2, 5 + bob, 9, 9 + bob, face)
         c.rect(3, 6 + bob, 3, 7 + bob, eye)
         c.rect(6, 6 + bob, 6, 7 + bob, eye)
         c.put(3, 8 + bob, pal["cheek"])
+        c.put(6, 8 + bob, pal["cheek"])
+        c.put(1, 7 + bob, accent)
+        c.put(8, 7 + bob, accent)
     else:  # up: back of the hood
         c.rect(4, 5 + bob, 11, 9 + bob, light)
         c.rect(6, 6 + bob, 9, 8 + bob, body)
+        c.rect(6, 7 + bob, 9, 7 + bob, accent)
+
     if pal["cap"]:
         cap = pal["cap"]
         c.rect(2, 3 + bob, 13, 4 + bob, cap)
