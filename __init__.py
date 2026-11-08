@@ -6,10 +6,10 @@ os.chdir(APP_DIR)
 sys.path.insert(0, APP_DIR)
 
 from badgeware import State
-from level import Level, TILE, DOOR, KEY, EXIT, FLOOR
+from level import Level, LEVELS, TILE, DOOR, KEY, EXIT, FLOOR
 from player import Player
 from guard import Guard
-import level as level_data
+import progress
 
 TITLE, PLAY, CAUGHT, WIN = range(4)
 
@@ -25,10 +25,12 @@ guard_sprites = image.load("assets/guard.png").spritesheet(3, 3)
 big_font = font.ziplock
 small_font = font.nope
 
-save = {"best": 0}
+save = {}
 State.load("metal_mona", save)
+progress.migrate(save)
 
-level = Level()
+level_index = 0
+level = Level(level_index)
 player = Player(mona_sprites)
 guards = []
 
@@ -53,11 +55,13 @@ def center_text(text, y, pen=WHITE):
 
 
 def start_level():
-    global mode, has_key, elapsed, spotted_by, mode_time
+    global mode, has_key, elapsed, spotted_by, mode_time, level
+    if level.index != level_index:
+        level = Level(level_index)
     level.reset()
     player.reset(*level.start)
     guards.clear()
-    for waypoints in level_data.PATROLS:
+    for waypoints in level.patrols:
         guards.append(Guard(guard_sprites, waypoints))
     has_key = False
     elapsed = 0.0
@@ -99,7 +103,7 @@ def draw_world(cam_x, cam_y, alerted=None):
 
 def draw_hud():
     screen.font = small_font
-    shadow_text("%.1f" % elapsed, 3, 2)
+    shadow_text("L%d  %.1f" % (level_index + 1, elapsed), 3, 2)
     if has_key:
         screen.blit(tiles.sprite(5, 0), vec2(screen.width - 18, 0))
 
@@ -133,10 +137,8 @@ def update_play(dt):
     elif t == EXIT:
         mode = WIN
         mode_time = badge.ticks
-        best = save["best"]
-        new_best = best == 0 or elapsed < best
+        new_best = progress.record_best(save, level_index, elapsed)
         if new_best:
-            save["best"] = round(elapsed, 1)
             State.save("metal_mona", save)
         return
 
@@ -160,6 +162,7 @@ def play():
 
 
 def title():
+    global level_index
     screen.pen = BG
     screen.rectangle(screen.clip)
     # Slowly pulsing spotlight cone behind the title character.
@@ -173,9 +176,10 @@ def title():
     screen.font = small_font
     if int(badge.ticks / 500) % 2:
         center_text("Press SELECT", 94)
-    if save["best"]:
-        center_text("Best %.1fs" % save["best"], 106)
+    if progress.best_for(save, 0):
+        center_text("Best %.1fs" % progress.best_for(save, 0), 106)
     if badge.pressed(BUTTON_SELECT):
+        level_index = 0
         start_level()
 
 
@@ -197,13 +201,15 @@ def caught():
 
 
 def win():
+    global level_index
     end_screen("MISSION CLEAR", YELLOW)
     line = "Time %.1fs" % elapsed
     if new_best:
         line += "  NEW BEST!"
     center_text(line, 62)
-    center_text("SELECT to play again", 74)
+    center_text("SELECT for next level", 74)
     if badge.ticks - mode_time > 400 and badge.pressed(BUTTON_SELECT):
+        level_index = progress.next_level(level_index, len(LEVELS))
         start_level()
 
 
